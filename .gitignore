@@ -1,2 +1,9 @@
+# Ignore node_modules
 blogging website - frontend/node_modules/
+
+# Ignore Vim swap files
 blogging website - frontend/src/components/*.swp
+
+# Ignore environment files
+.env
+server/.env
