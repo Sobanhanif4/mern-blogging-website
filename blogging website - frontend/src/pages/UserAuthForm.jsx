@@ -7,6 +7,7 @@ import { useContext, useRef } from "react";
 import axios from "axios";
 import { storeInSession, lookInSession, removeFromSession, logOutUser } from "../common/session";
 import { UserContext } from "../App";
+import { authWithGoogle } from "../common/firebase";
 
 const UserAuthForm = ({ type }) => {
 
@@ -21,7 +22,7 @@ const UserAuthForm = ({ type }) => {
         axios.post('http://localhost:3001' + serverRoute, formData)
             .then(({ data }) => {
                 storeInSession("user", JSON.stringify(data))
-                
+
                 setUserAuth(data)
 
             })
@@ -69,75 +70,155 @@ const UserAuthForm = ({ type }) => {
         userAuthThroughServer(serverRoute, formData)
     }
 
+    // const handleGoogleAuth = (e) => { 
+    //     e.preventDefault();
+
+    //     authWithGoogle().then(user => {
+        
+    //         let serverRoute = "/google-auth";
+
+    //         let formData = {
+    //             access_token: user.accessToken
+    //         }
+
+    //         userAuthThroughServer(serverRoute, formData)
+
+    //     })
+    //     .catch(err => {
+    //         toast.error("trouble login through google")
+    //         console.log(err);
+            
+    //     })
+    // }
+
+    const handleGoogleAuth = (e) => {
+        e.preventDefault();
+    
+        // Call authWithGoogle() and handle the result or error properly
+        authWithGoogle()
+            .then(user => {
+                // Ensure user is not undefined
+                if (user) {
+                    console.log("Authenticated User: ", user); // Debugging step
+    
+                    // Extract the accessToken from the user object
+                    let serverRoute = "/google-auth";
+                    let formData = {
+                        access_token: user.accessToken // Ensure user has accessToken property
+                    };
+    
+                    // Call server with user details
+                    userAuthThroughServer(serverRoute, formData);
+                } else {
+                    console.error("User object is undefined");
+                    toast.error("User authentication failed");
+                }
+            })
+            .catch(err => {
+                toast.error("Trouble logging in through Google");
+                console.error("Error in Google auth:", err); // Log any error that occurred
+            });
+    }
+    
+    
+
+    // const handleGoogleAuth = (e) => { 
+    //     e.preventDefault();
+      
+    //     authWithGoogle()
+    //       .then(user => {
+    //         console.log("User object:", user);  // Log user object to verify accessToken
+      
+    //         if (!user || !user.accessToken) {
+    //           throw new Error('No access token received');
+    //         }
+      
+    //         let serverRoute = "/google-auth";
+    //         let formData = {
+    //             access_token: user.accessToken
+    //           };
+      
+    //         userAuthThroughServer(serverRoute, formData);
+    //       })
+    //       .catch(err => {
+    //         console.error("Google authentication failed:", err);
+
+    //         toast.error("Trouble logging in through Google");
+    //         console.log(err);
+    //       });
+    //   };
+      
+
+
     return (
         access_token ?
-        <Navigate to="/" /> 
-        :
-        <PageAnimation keyValue={type}>
-            <section className="h-cover flex items-center justify-center">
-                <Toaster />
-                <form id="formElement" action="" className="w-[80%] max-w-[400px]">
-                    <h1 className="text-4xl font-gelasio capitalize text-center mb-24">
-                        {type == "sign-in" ? "Welcome Back" : "Join Us Now"}
-                    </h1>
+            <Navigate to="/" />
+            :
+            <PageAnimation keyValue={type}>
+                <section className="h-cover flex items-center justify-center">
+                    <Toaster />
+                    <form id="formElement" action="" className="w-[80%] max-w-[400px]">
+                        <h1 className="text-4xl font-gelasio capitalize text-center mb-24">
+                            {type == "sign-in" ? "Welcome Back" : "Join Us Now"}
+                        </h1>
 
-                    {type !== "sign-in" && (
+                        {type !== "sign-in" && (
+                            <InputBox
+                                name="fullname"
+                                type="text"
+                                placeholder="Full name"
+                                icon="fi-rr-user"
+                            />
+                        )}
+
                         <InputBox
-                            name="fullname"
-                            type="text"
-                            placeholder="Full name"
-                            icon="fi-rr-user"
+                            name="email"
+                            type="email"
+                            placeholder="Email"
+                            icon="fi-rr-envelope"
                         />
-                    )}
+                        <InputBox
+                            name="password"
+                            type="password"
+                            placeholder="Password"
+                            icon="fi-rr-key"
+                        />
 
-                    <InputBox
-                        name="email"
-                        type="email"
-                        placeholder="Email"
-                        icon="fi-rr-envelope"
-                    />
-                    <InputBox
-                        name="password"
-                        type="password"
-                        placeholder="Password"
-                        icon="fi-rr-key"
-                    />
+                        <button className="btn-dark center mt-14" type="submit"
+                            onClick={handleSubmit}
+                        >
+                            {type.replace("-", " ")}
+                        </button>
 
-                    <button className="btn-dark center mt-14" type="submit"
-                        onClick={handleSubmit}
-                    >
-                        {type.replace("-", " ")}
-                    </button>
+                        <div className="relative w-full flex items-center gap-2 my-10 opacity-10 uppercase text-black font-bold">
+                            <hr className="w-1/2 border-black" />
+                            <p>or</p>
+                            <hr className="w-1/2 border-black" />
+                        </div>
 
-                    <div className="relative w-full flex items-center gap-2 my-10 opacity-10 uppercase text-black font-bold">
-                        <hr className="w-1/2 border-black" />
-                        <p>or</p>
-                        <hr className="w-1/2 border-black" />
-                    </div>
+                        <button className="btn-dark flex items-center justify-content gap-4 w-[90%] center" onClick={handleGoogleAuth}>
+                            <img src={googleIcon} className="w-5" alt="Google Icon" />
+                            continue with google
+                        </button>
 
-                    <button className="btn-dark flex items-center justify-content gap-4 w-[90%] center">
-                        <img src={googleIcon} className="w-5" alt="Google Icon" />
-                        continue with google
-                    </button>
-
-                    {type === "sign-in" ? (
-                        <p className="mt-6 text-dark-grey text-xl text-center">
-                            Don't have an account?
-                            <Link to="/signup" className="underline text-black text-xl ml-1">
-                                Join Us today!
-                            </Link>
-                        </p>
-                    ) : (
-                        <p className="mt-6 text-dark-grey text-xl text-center">
-                            Already have an account?
-                            <Link to="/signin" className="underline text-black text-xl ml-1">
-                                Sign in here.
-                            </Link>
-                        </p>
-                    )}
-                </form>
-            </section>
-        </PageAnimation>
+                        {type === "sign-in" ? (
+                            <p className="mt-6 text-dark-grey text-xl text-center">
+                                Don't have an account?
+                                <Link to="/signup" className="underline text-black text-xl ml-1">
+                                    Join Us today!
+                                </Link>
+                            </p>
+                        ) : (
+                            <p className="mt-6 text-dark-grey text-xl text-center">
+                                Already have an account?
+                                <Link to="/signin" className="underline text-black text-xl ml-1">
+                                    Sign in here.
+                                </Link>
+                            </p>
+                        )}
+                    </form>
+                </section>
+            </PageAnimation>
     );
 };
 
