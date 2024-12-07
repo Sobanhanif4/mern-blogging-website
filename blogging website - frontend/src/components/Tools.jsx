@@ -40,7 +40,7 @@ const uploadImageByUrl = (e) => {
 export const tools = {
     embed: Embed,
     list: {
-        class: List,
+        class: List, 
         inlineToolbar: true
     },
 
