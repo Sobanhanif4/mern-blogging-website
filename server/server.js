@@ -16,6 +16,7 @@ import aws from "aws-sdk";
 
 import admin from "firebase-admin"
 import { getAuth } from "firebase-admin/auth"
+import { error } from 'console';
 const { credential } = admin;
 const server = express();
 let PORT = 3001;
@@ -34,15 +35,24 @@ mongoose.connect(process.env.DB_LOCATION, {
     autoIndex: true
 })
 
+//Setting up s3 bucket
 const s3 = new aws.S3({
     region: 'eu-north-1',
     accessKeyId: process.env.AWS_ACCESS_KEY,
-    secrectAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 })
 
-const generateUploadUrl = () => {
+const generateUploadURL = async () => {
     const date = new Date();
     const imageName = `${nanoid()}-${date.getTime()}.jpeg`
+
+    return await s3.getSignedUrlPromise('putObject', {
+        Bucket: 'blogging-mern',
+        Key: imageName,
+        Expires: 1000,
+        ContentType: "image/jpeg"
+
+    })
 }
 
 const formateDataSend = (user) => {
@@ -65,6 +75,18 @@ const generateUsername = async (email) => {
 
     return username;
 }
+
+
+//upload image url route
+
+server.get('/get-upload-url', (req, res) => {
+    generateUploadURL().then(url => res.status(200).json({ uploadURL: url }))
+    .catch(err => {
+        console.log(err.message);
+        return res.status(500).json({error: err.message})
+        
+    })
+})
 
 server.post("/signup", (req, res) => {
 
@@ -140,8 +162,8 @@ server.post("/signin", (req, res) => {
                             return res.status(200).json(formateDataSend(user))
                         }
                     })
-            } else { 
-                return res.status(403).json({"error": "Account was signed in with google, try log in with google."})
+            } else {
+                return res.status(403).json({ "error": "Account was signed in with google, try log in with google." })
             }
         })
         .catch(err => {
