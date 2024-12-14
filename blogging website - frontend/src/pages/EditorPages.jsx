@@ -8,8 +8,8 @@ import PublishForm from "../components/PublishForm"
 const blogStructure = {
     title: '',
     banner: '',
-    content: '',
-    tags: '',
+    content: [],
+    tags: [ ],
     des: '',
     author: { personal_info: {} }
 }

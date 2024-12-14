@@ -1,14 +1,23 @@
 import { useContext } from "react"
 import { EditorContext } from "../pages/EditorPages"
-import { Toaster } from "react-hot-toast"
+import toast, { Toaster } from "react-hot-toast"
 import PageAnimation from "../common/PageAnimation"
+import Tags from "./Tags"
+import { UserContext } from "../App"
+import { useNavigate } from "react-router-dom"
+import axios from "axios"
 
 
 const PublishForm = () => {
 
     let characterLimit = 200;
+    let tagLimit = 3;
 
-    let { blog, blog: { banner, title, tags, des }, setEditorState, setBlog } = useContext(EditorContext)
+    let { blog, blog: { banner, content, title, tags, des }, setEditorState, setBlog } = useContext(EditorContext)
+
+    let { userAuth: { access_token } } = useContext(UserContext)
+
+    let navigate = useNavigate();
 
     const handleCloseEvent = () => {
         setEditorState("editor")
@@ -30,6 +39,69 @@ const PublishForm = () => {
             e.preventDefault();
         }
     };
+
+    const handleKeyDown = (e) => {
+        if (e.keyCode == 13 || e.keyCode == 188) {
+            e.preventDefault();
+
+            let tag = e.target.value;
+
+            if (tags.length < tagLimit) {
+                if (!tags.includes(tag) && tag.length) {
+                    setBlog({ ...blog, tags: [...tags, tag] })
+                }
+            }
+            e.target.value = ""
+        }
+    }
+
+    const publishBlog = (e) => {
+
+        if (e.target.className.includes("disable")) {
+            return;
+        }
+
+        if (!title.length) {
+            return toast.error("Write blog title before publishing");
+        }
+        if (!des.length || des.length > characterLimit) {
+            return toast.error(`Write description about your blog with in ${characterLimit}characters to publish`);
+        }
+        if (!tags.length) {
+            return toast.error("Enter at least 1 tag")
+        }
+
+        let loadingToast = toast.loading("Publishing....")
+
+        e.target.classList.add('disable');
+
+        let blogObj = {
+            title, banner, des, content, tags, draft: false
+        }
+
+        axios.post('http://localhost:3001/create-blog',
+        blogObj, {
+            headers: {
+                'Authorization': `Bearer ${access_token}`
+            }
+        })
+            .then(() => {
+                e.target.classList.remove('disable');
+
+                toast.dismiss(loadingToast)
+                toast.success("Published!")
+
+                setTimeout(() => {
+                    navigate("/")
+                }, 500)
+            })
+            .catch(({ response }) => {
+                e.target.classList.remove('disable');
+                toast.dismiss(loadingToast)
+                return toast.error(response.data.error)
+            })
+
+    }
     return (
         <PageAnimation>
             <section className="w-screen min-h-screen grid items-center lg:grid-cols-2 py-16 lg:gap-4">
@@ -76,6 +148,36 @@ const PublishForm = () => {
                     <p className="mt-1 text-dark-grey text-sm text-right">
                         {characterLimit - des.length} character left
                     </p>
+
+                    <p className="text-dark-grey mb-2 mt-9">
+                        Topics - (Helps in ranking)
+                    </p>
+
+                    <div className="relative input-box pl-2 py-2 pb-4">
+                        <input type="text" placeholder="Topic" className="sticky input-box bg-white top-0 left-0 pl-4 mb-3 focus:bg-white" onKeyDown={handleKeyDown} />
+
+                        {
+                            tags.map((tag, i) => {
+                                return <Tags tag={tag} key={i} />
+                            })
+                        }
+
+
+
+                    </div>
+                    <p className="mt-1 text-dark-grey text-right">
+
+                        {tags.length > 1 ?
+                            `${tagLimit - tags.length} tag left</p>`
+                            :
+                            `${tagLimit - tags.length} tags left</p>`
+                        }
+                    </p>
+                    <button className="btn-dark px-8"
+
+                        onClick={publishBlog}>
+                        Publish
+                    </button>
                 </div>
             </section>
         </PageAnimation>
