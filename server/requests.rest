@@ -1,4 +1,27 @@
-GET http://localhost:3001/get-upload-url
+# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWRlNDM5Y2M0Y2UyNDliNWFhYTA1YyIsImlhdCI6MTczNDIwNjUyMX0.uPQUhAzkPRf-BxfsO4tKlpS6315wsQD5wPlWH_QLTq4
+
+# POST http://localhost:3001/signup
+# Content-Type: application/json
+
+# {
+#     "fullname": "sobanh",
+#     "email": "sobkhan123@gmail.com",
+#     "password": "Sobkhan1"
+# }
+
+POST http://localhost:3001/create-blog
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWRlNDM5Y2M0Y2UyNDliNWFhYTA1YyIsImlhdCI6MTczNDIwNjUyMX0.uPQUhAzkPRf-BxfsO4tKlpS6315wsQD5wPlWH_QLTq4
+
+{
+    "title": "test title",
+    "banner": "https: asdsd.com/image-url",
+    "des": "This is a short des",
+    "content": {
+        "blocks": [1,2]
+    },
+    "tags": ["tag1", "tag2"]
+}
 
 
   
